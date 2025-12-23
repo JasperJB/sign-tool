@@ -7,7 +7,8 @@ import Draggable from "react-draggable";
 import SignatureCanvas from "react-signature-canvas";
 import {
     Download, Type, PenTool, Calendar, X, UploadCloud,
-    ChevronLeft, ChevronRight, Save, FileText, Check
+    ChevronLeft, ChevronRight, Save, FileText, Check,
+    Plus, Minus
 } from "lucide-react";
 import { saveAs } from "file-saver";
 
@@ -188,6 +189,10 @@ export default function Signer() {
         setElements(prev => prev.map((el) => (el.id === id ? { ...el, value } : el)));
     };
 
+    const updateElementSize = (id: string, width: number, height: number) => {
+        setElements(prev => prev.map((el) => (el.id === id ? { ...el, width, height } : el)));
+    };
+
     // --- Render ---
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900 selection:bg-blue-100">
@@ -355,6 +360,7 @@ export default function Signer() {
                                     updatePosition={updateElementPosition}
                                     updateValue={updateElementValue}
                                     remove={removeElement}
+                                    updateSize={updateElementSize}
                                 />
                             ))}
                         </div>
@@ -424,12 +430,14 @@ function DraggableElement({
     el,
     updatePosition,
     updateValue,
-    remove
+    remove,
+    updateSize
 }: {
     el: FormElement,
     updatePosition: (id: string, x: number, y: number) => void,
     updateValue: (id: string, value: string) => void,
-    remove: (id: string) => void
+    remove: (id: string) => void,
+    updateSize: (id: string, width: number, height: number) => void
 }) {
     const nodeRef = useRef<HTMLDivElement>(null);
 
@@ -461,13 +469,40 @@ function DraggableElement({
                         style={{ fontSize: '14px' }}
                     />
                 ) : (
-                    <div className="border border-transparent hover:border-blue-300 hover:border-dashed p-0.5 rounded transition-colors">
+                    <div className="border border-transparent hover:border-blue-300 hover:border-dashed p-0.5 rounded transition-colors relative">
                         <img
                             src={el.value}
                             alt="signature"
                             className="pointer-events-none select-none"
                             style={{ width: el.width, height: el.height }}
                         />
+
+                        {/* Resize Controls for Signature */}
+                        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 hidden group-hover:flex bg-white shadow-xl rounded-full p-1.5 border border-gray-100 gap-3 items-center z-30">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateSize(el.id, (el.width || 120) * 0.9, (el.height || 60) * 0.9);
+                                }}
+                                className="p-1 hover:bg-blue-50 rounded-full text-blue-600 transition-colors"
+                                title="Smaller"
+                            >
+                                <Minus size={14} />
+                            </button>
+                            <span className="text-[10px] font-bold text-gray-400 min-w-[30px] text-center uppercase tracking-tighter">
+                                {Math.round(((el.width || 120) / 120) * 100)}%
+                            </span>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateSize(el.id, (el.width || 120) * 1.1, (el.height || 60) * 1.1);
+                                }}
+                                className="p-1 hover:bg-blue-50 rounded-full text-blue-600 transition-colors"
+                                title="Larger"
+                            >
+                                <Plus size={14} />
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
