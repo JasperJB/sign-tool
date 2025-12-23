@@ -349,40 +349,13 @@ export default function Signer() {
 
                             {/* Elements Overlay */}
                             {elements.filter(el => el.page === currentPage).map((el) => (
-                                <Draggable
+                                <DraggableElement
                                     key={el.id}
-                                    defaultPosition={{ x: el.x, y: el.y }}
-                                    onStop={(e, data) => updateElementPosition(el.id, data.x, data.y)}
-                                    bounds="parent"
-                                >
-                                    <div className="absolute cursor-move group z-10 p-1" style={{ top: 0, left: 0 }}>
-                                        {/* Delete Button */}
-                                        <div
-                                            className="absolute -top-3 -right-3 hidden group-hover:flex bg-red-500 text-white rounded-full p-1.5 shadow-md cursor-pointer hover:bg-red-600 transition-colors z-20"
-                                            onClick={() => removeElement(el.id)}
-                                        >
-                                            <X size={10} />
-                                        </div>
-
-                                        {el.type === "text" || el.type === "date" ? (
-                                            <input
-                                                value={el.value}
-                                                onChange={(e) => updateElementValue(el.id, e.target.value)}
-                                                className="bg-transparent hover:bg-blue-50/50 border border-transparent hover:border-blue-300 hover:border-dashed rounded p-1 text-lg font-sans outline-none w-auto min-w-[120px] text-gray-900 placeholder-gray-400"
-                                                style={{ fontSize: '14px' }}
-                                            />
-                                        ) : (
-                                            <div className="border border-transparent hover:border-blue-300 hover:border-dashed p-0.5 rounded transition-colors">
-                                                <img
-                                                    src={el.value}
-                                                    alt="signature"
-                                                    className="pointer-events-none select-none"
-                                                    style={{ width: el.width, height: el.height }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                </Draggable>
+                                    el={el}
+                                    updatePosition={updateElementPosition}
+                                    updateValue={updateElementValue}
+                                    remove={removeElement}
+                                />
                             ))}
                         </div>
                     )}
@@ -443,5 +416,61 @@ export default function Signer() {
                 </div>
             )}
         </div>
+    );
+}
+
+// Sub-component to handle Draggable with nodeRef for React 19 compatibility
+function DraggableElement({
+    el,
+    updatePosition,
+    updateValue,
+    remove
+}: {
+    el: FormElement,
+    updatePosition: (id: string, x: number, y: number) => void,
+    updateValue: (id: string, value: string) => void,
+    remove: (id: string) => void
+}) {
+    const nodeRef = useRef<HTMLDivElement>(null);
+
+    return (
+        <Draggable
+            nodeRef={nodeRef}
+            defaultPosition={{ x: el.x, y: el.y }}
+            onStop={(e, data) => updatePosition(el.id, data.x, data.y)}
+            bounds="parent"
+        >
+            <div
+                ref={nodeRef}
+                className="absolute cursor-move group z-10 p-1"
+                style={{ top: 0, left: 0 }}
+            >
+                {/* Delete Button */}
+                <div
+                    className="absolute -top-3 -right-3 hidden group-hover:flex bg-red-500 text-white rounded-full p-1.5 shadow-md cursor-pointer hover:bg-red-600 transition-colors z-20"
+                    onClick={() => remove(el.id)}
+                >
+                    <X size={10} />
+                </div>
+
+                {el.type === "text" || el.type === "date" ? (
+                    <input
+                        value={el.value}
+                        onChange={(e) => updateValue(el.id, e.target.value)}
+                        className="bg-transparent hover:bg-blue-50/50 border border-transparent hover:border-blue-300 hover:border-dashed rounded p-1 text-lg font-sans outline-none w-auto min-w-[120px] text-gray-900 placeholder-gray-400"
+                        style={{ fontSize: '14px' }}
+                    />
+                ) : (
+                    <div className="border border-transparent hover:border-blue-300 hover:border-dashed p-0.5 rounded transition-colors">
+                        <img
+                            src={el.value}
+                            alt="signature"
+                            className="pointer-events-none select-none"
+                            style={{ width: el.width, height: el.height }}
+                        />
+                    </div>
+                )}
+            </div>
+        </Draggable>
     );
 }
